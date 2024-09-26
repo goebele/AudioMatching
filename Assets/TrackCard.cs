@@ -8,7 +8,7 @@ public class TrackCard : MonoBehaviour
     Dictionary<int, Color> testingColors = new Dictionary<int, Color>()
     {
         {1, Color.blue },
-        {2, Color.cyan},
+        {2, Color.cyan },
         {3, Color.green },
         {4, Color.magenta },
         {5, Color.red },
@@ -21,6 +21,8 @@ public class TrackCard : MonoBehaviour
     public static IntEvent TrackCardClickedEvent = new IntEvent();
     public int trackNumber;
     public bool matched = false;
+
+
     // Start is called before the first frame update
     void Start()
     {

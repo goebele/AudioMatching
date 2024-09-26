@@ -195,8 +195,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5212b9b427feb0f42ac733ec2cd786a4, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  faceDown: 1
   trackNumber: 0
+  matched: 0
 --- !u!61 &6648473195067421261
 BoxCollider2D:
   m_ObjectHideFlags: 0
