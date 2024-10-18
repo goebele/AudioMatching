@@ -7,53 +7,25 @@ using UnityEngine.Events;
 
 public class GameManager : MonoBehaviour
 {
-    public class MatchEvent: UnityEvent<int> { }
-    public static UnityEvent ResetEvent = new UnityEvent();
-    public static MatchEvent MatchedTrackEvent = new MatchEvent();
+    
+
     public string trackFolder = "tracks";
+    public string artFolder = "Cards";
     public int numberOfCopies = 3;
     int maxRows = 5;
     float spacing = 2f;
 
-    int matchedTrack = 0;
-    int matches = 0;
 
     // Start is called before the first frame update
     void Start()
     {
         List<AudioClip> sounds = LoadSounds(trackFolder);
-        List<GameObject> cards = CreateCardsFromSounds(sounds);
+        List<Sprite> art = LoadCardBacks(artFolder);
+        List<GameObject> cards = CreateCardsFromSoundsAndArt(sounds, art);
         cards.Shuffle();
         arrayCardsInGrid(cards);
-        TrackCard.TrackCardClickedEvent.AddListener(HandleCardClicked);
+        StateManager stateManager = new StateManager();
     }
-
-
-    void HandleCardClicked(int trackNumber)
-    {
-        if (matchedTrack == 0)
-        {
-            matchedTrack = trackNumber;
-        }
-        if (matchedTrack != trackNumber)
-        {
-
-            Invoke("HandleReset", 1f);
-        }
-        matches++;
-        if (matches == numberOfCopies)
-        {
-            MatchedTrackEvent.Invoke(trackNumber);
-        }
-    }
-
-    void HandleReset()
-    {
-        ResetEvent.Invoke();
-        matchedTrack = 0;
-        matches = 0;
-    }            
-
 
     List<AudioClip> LoadSounds(string folderName)
     {
@@ -71,9 +43,25 @@ public class GameManager : MonoBehaviour
         return trackList;
     }
 
-    List<GameObject> CreateCardsFromSounds(List<AudioClip> sounds)
+    List<Sprite> LoadCardBacks(string folderName)
     {
-        int trackNumber = 1;
+        string path = Application.dataPath + "/Resources/" + folderName;
+        List<Sprite> cardBackList = new List<Sprite>();
+        string[] cardBacknames = Directory.GetFiles(path);
+        foreach (string cardBackName in cardBacknames)
+        {
+            Sprite cardBack = Resources.Load<Sprite>(folderName + "/" + Path.GetFileNameWithoutExtension(cardBackName));
+            if (cardBack is not null)
+            {
+                cardBackList.Add(cardBack);
+            }
+        }
+        return cardBackList;
+    }
+
+    List<GameObject> CreateCardsFromSoundsAndArt(List<AudioClip> sounds, List<Sprite> art)
+    {
+        int trackNumber = 0;
         List<GameObject> cardsByClip = new List<GameObject>();
         foreach (AudioClip sound in sounds)
         {
@@ -81,11 +69,13 @@ public class GameManager : MonoBehaviour
             {
                 GameObject instance = Instantiate(Resources.Load<GameObject>("TrackCard"));
                 AudioSource audioSource = instance.GetComponent<AudioSource>();
-
+                SpriteRenderer spriteRenderer = instance.transform.Find("CardFront").GetComponent<SpriteRenderer>();
                 TrackCard script = instance.GetComponent<TrackCard>();
+                
                 script.trackNumber = trackNumber;
+                spriteRenderer.sprite = art[trackNumber];
                 audioSource.clip = sound;
-                audioSource.volume = .1f;
+                audioSource.volume = 0f;
                 audioSource.loop = true;
                 audioSource.Play();
                 cardsByClip.Add(instance);
@@ -96,7 +86,7 @@ public class GameManager : MonoBehaviour
         
         return cardsByClip;
     }
-
+     
     void arrayCardsInGrid(List<GameObject> cards)
     {
         int rows = ((cards.Count-1) / maxRows) + 1;
