@@ -24,7 +24,8 @@ public class GameManager : MonoBehaviour
         List<GameObject> cards = CreateCardsFromSoundsAndArt(sounds, art);
         cards.Shuffle();
         arrayCardsInGrid(cards);
-        StateManager stateManager = new StateManager();
+        StateManager stateManager = gameObject.AddComponent(typeof(StateManager)) as StateManager;
+        stateManager.Init(cards);
     }
 
     List<AudioClip> LoadSounds(string folderName)

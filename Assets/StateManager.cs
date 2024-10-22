@@ -3,58 +3,89 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Events;
 
-public class StateManager
+public class StateManager: MonoBehaviour
 {
 
     static int matchedTrack = -1;
     static int matches = 0;
     static int numberOfCopies = 3;
     public static bool animating = false;
-    public class MatchEvent : UnityEvent<int> { }
-    public static UnityEvent ResetEvent = new UnityEvent();
-    public static MatchEvent MatchedTrackEvent = new MatchEvent();
-    public static UnityEvent AnimatingEvent = new UnityEvent();
-    public static UnityEvent AnimationFinishedEvent = new UnityEvent();
+    List<TrackCard> totalCards = new List<TrackCard>();
+    List<TrackCard> flippedCards = new List<TrackCard>();
 
-    public static void HandleCardClicked(int trackNumber)
+    public void Init(List<GameObject> cards)
     {
+        foreach(GameObject cardObject in cards)
+        {
+            TrackCard card = getCardScript(cardObject);
+            card.clickedCallback = HandleCardClicked;
+            totalCards.Add(card);
+        }
+    }
+
+    private TrackCard getCardScript(GameObject card)
+    {
+        return (TrackCard)card.GetComponent<TrackCard>();
+    }
+
+    private bool isCardInGroupStillAnimating(List<TrackCard> cards)
+    {
+        foreach(TrackCard card in cards)
+        {
+            if (card.animating == true)
+            {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public void HandleCardClicked(TrackCard card)
+    {
+        card.FlipCard();
         if (matchedTrack == -1)
         {
-            matchedTrack = trackNumber;
+            matchedTrack = card.trackNumber;
         }
-        TrackCard.TrackCardClickedEvent.Invoke(trackNumber);
+        flippedCards.Add(card);
         matches++;
-        if (matchedTrack != trackNumber)
+        if (matchedTrack != card.trackNumber)
         {
-            HandleReset();
+            List<TrackCard> wrongMatches = new List<TrackCard>(flippedCards);
+            StartCoroutine(HandleReset(wrongMatches));
+            flippedCards.Clear();
         }
         if (matches == numberOfCopies)
         {
-            MatchedTrackEvent.Invoke(trackNumber);
             matchedTrack = -1;
+            flippedCards.Clear();
         }
     }
 
-    static void HandleReset()
+    IEnumerator HandleReset(List<TrackCard> wrongMatches)
     {
-        
+
         matchedTrack = -1;
         matches = 0;
-        ResetEvent.Invoke();
+        while (isCardInGroupStillAnimating(wrongMatches))
+        {
+            yield return null;
+        }
+        foreach(TrackCard card in wrongMatches)
+        {
+            card.FlipCard();
+        }
+
+        yield break;
+    }
+   
+    void handleMatch()
+    {
+        foreach(TrackCard card in flippedCards)
+        {
+            card.matched = true;
+        }
     }
 
-    public StateManager()
-    {
-        AnimatingEvent.AddListener(setAnimatingFlag);
-        AnimationFinishedEvent.AddListener(unsetAnimatingFlag);
-    }
-
-    static void setAnimatingFlag() {
-        animating = true;
-    }
-    static void unsetAnimatingFlag()
-    {
-        animating = false;
-    }
 
 }
