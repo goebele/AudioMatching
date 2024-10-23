@@ -9,6 +9,7 @@ public class StateManager: MonoBehaviour
     static int matchedTrack = -1;
     static int matches = 0;
     static int numberOfCopies = 3;
+    static int score = 0;
     public static bool animating = false;
     List<TrackCard> totalCards = new List<TrackCard>();
     List<TrackCard> flippedCards = new List<TrackCard>();
@@ -21,6 +22,7 @@ public class StateManager: MonoBehaviour
             card.clickedCallback = HandleCardClicked;
             totalCards.Add(card);
         }
+        GameManager.UpdateScore(0);
     }
 
     private TrackCard getCardScript(GameObject card)
@@ -42,6 +44,10 @@ public class StateManager: MonoBehaviour
 
     public void HandleCardClicked(TrackCard card)
     {
+        if (card.flippedUp)
+        {
+            return;
+        }
         card.FlipCard();
         if (matchedTrack == -1)
         {
@@ -58,7 +64,14 @@ public class StateManager: MonoBehaviour
         if (matches == numberOfCopies)
         {
             matchedTrack = -1;
+            foreach(TrackCard matchedCard in flippedCards)
+            {
+                card.PlayTrack();
+            }
             flippedCards.Clear();
+            score = card.modifier(card.score, score);
+            GameManager.UpdateScore(score);
+
         }
     }
 

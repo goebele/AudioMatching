@@ -3,16 +3,35 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Events;
 using System;
-
+using TMPro;
 
 public class TrackCard : MonoBehaviour
 {
-
     public int trackNumber;
     public bool matched = false;
-    public bool flipped = false;
+    public bool flippedUp = false;
     public bool animating = false;
     public Action<TrackCard> clickedCallback;
+    public GameManager.ModifyScore modifier;
+    public int score;
+
+    public void setScore()
+    {
+        TMP_Text[] texts = GetComponentsInChildren<TMP_Text>();
+        string mod = "";
+        if(this.modifier == GameManager.MultiplyScore)
+        {
+            mod = "x";
+        } else
+        {
+            mod = "+";
+        }
+        string scorelabel = $"{mod}{score}";
+        foreach(TMP_Text text in texts)
+        {
+            text.text = scorelabel;
+        }
+    }
 
     // Start is called before the first frame update
     void Start()
@@ -33,13 +52,13 @@ public class TrackCard : MonoBehaviour
 
 
 
-    void OnTrackSelected(int track)
+    public void PlayTrack()
     {
-        if (track == this.trackNumber) {
-            AudioSource audioSource = GetComponent<AudioSource>();
-            audioSource.volume = .5f;
-        }
+          AudioSource audioSource = GetComponent<AudioSource>();
+          audioSource.volume = .5f;
     }
+
+
 
     void OnTrackMatched(int track)
     {
@@ -54,10 +73,6 @@ public class TrackCard : MonoBehaviour
         if (this.matched == false) {
             AudioSource audioSource = GetComponent<AudioSource>();
             audioSource.volume = 0f;
-            if (this.flipped == true)
-            {
-                this.flipped = false;
-            }
         }
 
     }
@@ -69,6 +84,14 @@ public class TrackCard : MonoBehaviour
 
     IEnumerator Flip(float durationSeconds = .3f)
     {
+        if (this.flippedUp)
+        {
+            this.flippedUp = false;
+        }
+        else
+        {
+            this.flippedUp = true;
+        }
         this.animating = true;
         float timeElapsed = 0f;
         while(timeElapsed < durationSeconds)
@@ -80,6 +103,7 @@ public class TrackCard : MonoBehaviour
             yield return null;
         }
         this.animating = false;
+
         yield break;
     }
 

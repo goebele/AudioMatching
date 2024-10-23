@@ -4,17 +4,45 @@ using UnityEngine;
 using System.IO;
 using UnityEngine.UI;
 using UnityEngine.Events;
+using UnityEngine.UIElements;
+
+
 
 public class GameManager : MonoBehaviour
 {
-    
 
+    static VisualElement root;
     public string trackFolder = "tracks";
     public string artFolder = "Cards";
     public int numberOfCopies = 3;
     int maxRows = 5;
     float spacing = 2f;
 
+    public delegate int ModifyScore(int modifier, int score);
+
+    public static int MultiplyScore(int modifier, int score)
+    {
+        return score * modifier;
+    }
+
+    public static int AddScore(int modifier, int score)
+    {
+        return score + modifier;
+    }
+
+    public static void UpdateScore(int newScore)
+    {
+        Label score = root.Q<Label>("Score");
+        score.text = $"Score: {newScore}";
+    }
+
+    List<int> scoreOptions = new List<int> { 10, 15, 20};
+    List<ModifyScore> modifierOptions = new List<ModifyScore> { MultiplyScore, AddScore };
+
+    class ScoreModifier{
+        int score;
+        ModifyScore modifier;
+    }
 
     // Start is called before the first frame update
     void Start()
@@ -25,7 +53,9 @@ public class GameManager : MonoBehaviour
         cards.Shuffle();
         arrayCardsInGrid(cards);
         StateManager stateManager = gameObject.AddComponent(typeof(StateManager)) as StateManager;
+        root = GetComponent<UIDocument>().rootVisualElement;
         stateManager.Init(cards);
+        
     }
 
     List<AudioClip> LoadSounds(string folderName)
@@ -66,6 +96,8 @@ public class GameManager : MonoBehaviour
         List<GameObject> cardsByClip = new List<GameObject>();
         foreach (AudioClip sound in sounds)
         {
+            int score = scoreOptions[(trackNumber + 1) % scoreOptions.Count];
+            ModifyScore modifier = modifierOptions[(trackNumber + 1) % modifierOptions.Count];
             for (int i = 0; i < numberOfCopies; i++)
             {
                 GameObject instance = Instantiate(Resources.Load<GameObject>("TrackCard"));
@@ -80,6 +112,9 @@ public class GameManager : MonoBehaviour
                 audioSource.loop = true;
                 audioSource.Play();
                 cardsByClip.Add(instance);
+                script.score = score;
+                script.modifier = modifier;
+                script.setScore();
 
             }
             trackNumber++;
